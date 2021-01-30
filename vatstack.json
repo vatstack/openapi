@@ -65,20 +65,21 @@
           "created": {
             "type": "string",
             "description": "ISO date at which the object was created.",
-            "format": "date"
+            "format": "date-time"
           },
           "id": {
+            "type": "string",
             "description": "Unique identifier for the object.",
-            "type": "string"
+            "format": "uuid"
           },
           "query": {
-            "description": "Your original query.",
-            "type": "string"
+            "type": "string",
+            "description": "Your original query."
           },
           "requested": {
             "type": "string",
             "description": "ISO date at which the validation request was originally performed. Types `eu_vat` and `gb_vat` do not specify a time.",
-            "format": "date"
+            "format": "date-time"
           },
           "type": {
             "type": "string",
@@ -95,7 +96,7 @@
           "updated": {
             "type": "string",
             "description": "ISO date at which the object was updated.",
-            "format": "date"
+            "format": "date-time"
           },
           "valid": {
             "type": "boolean",
@@ -107,8 +108,8 @@
             "description": "Boolean indicating whether the VAT number contained in `query` is in a valid format."
           },
           "vat_number": {
-            "description": "VAT number extracted from your query without the country code.",
-            "type": "string"
+            "type": "string",
+            "description": "VAT number extracted from your query without the country code."
           }
         }
       }
@@ -198,11 +199,72 @@
         "summary": "Retrieves all validation objects in order of creation, with the most recent appearing highest.",
         "parameters": [
           {
-            "name": "username",
-            "in": "path",
-            "required": true,
+            "name": "batch",
+            "in": "query",
+            "description": "Show only objects that belong to a batch with the given identifier.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Integer for the current page.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "query",
+            "in": "query",
+            "description": "The VAT number you want to search in the `query` field of your records.",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "requested_since",
+            "in": "query",
+            "description": "Show only objects where the `requested` date is this date or later. Format `YYYY-MM-DD`.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "requested_until",
+            "in": "query",
+            "description": "Show only objects where the `requested` date is this date or earlier. Format `YYYY-MM-DD`.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Show only objects of specified type field.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "au_gst",
+                "ch_vat",
+                "eu_moss",
+                "eu_vat",
+                "gb_vat",
+                "no_vat"
+              ]
             }
           }
         ],
@@ -212,7 +274,28 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/validation"
+                  "type": "object",
+                  "properties": {
+                    "has_more": {
+                      "description": "True if this list has another page of items after this one that can be fetched.",
+                      "type": "boolean"
+                    },
+                    "validations_count": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "validations": {
+                      "items": {
+                        "$ref": "#/components/schemas/validation"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "has_more",
+                    "validations_count",
+                    "validations"
+                  ]
                 }
               }
             }
@@ -269,9 +352,6 @@
       }
     }
   },
-  "schemes": [
-    "https"
-  ],
   "security": [
     {
       "basicAuth": [
@@ -283,8 +363,10 @@
     {
       "url": "https://api.vatstack.com/{basePath}",
       "description": "Production API server.",
-      "basePath": {
-        "default": "v1"
+      "variables": {
+        "basePath": {
+          "default": "v1"
+        }
       }
     }
   ]
