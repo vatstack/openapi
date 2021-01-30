@@ -115,7 +115,12 @@
       }
     },
     "securitySchemes": {
-      "apiKey": {
+      "publicKey": {
+        "type": "apiKey",
+        "name": "X-API-KEY",
+        "in": "header"
+      },
+      "secretKey": {
         "type": "apiKey",
         "name": "X-API-KEY",
         "in": "header"
@@ -192,7 +197,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "publicKey": []
+          }
+        ]
       },
       "get": {
         "operationId": "getAllValidations",
@@ -310,7 +320,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "publicKey": []
+          }
+        ]
       }
     },
     "/validations/{id}": {
@@ -348,7 +363,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "publicKey": []
+          }
+        ]
       }
     }
   },
