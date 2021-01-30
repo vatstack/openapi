@@ -115,10 +115,10 @@
       }
     },
     "securitySchemes": {
-      "basicAuth": {
-        "type": "http",
-        "description": "Basic HTTP authentication. Allowed headers-- Authorization: Basic <api_key>",
-        "scheme": "basic"
+      "apiKey": {
+        "type": "apiKey",
+        "name": "X-API-KEY",
+        "in": "header"
       }
     }
   },
@@ -352,13 +352,6 @@
       }
     }
   },
-  "security": [
-    {
-      "basicAuth": [
-
-      ]
-    }
-  ],
   "servers": [
     {
       "url": "https://api.vatstack.com/{basePath}",
