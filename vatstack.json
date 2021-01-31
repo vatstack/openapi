@@ -956,10 +956,10 @@
         ]
       }
     },
-    "hits": {
+    "/hits": {
       "get": {
         "operationId": "getAllHits",
-        "summary": "This endpoint can be useful if you want to perform a quick check against your hits count before initiating a VAT number validation request.",
+        "summary": "This endpoint can be useful if you want to perform a quick check against your hits count before initiating an API request.",
         "responses": {
           "200": {
             "description": "Hits successfully retrieved.",
