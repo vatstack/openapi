@@ -1,16 +1,21 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "Vatstack API",
+    "title": "Vatstack API Specification",
     "description": "A suite of VAT APIs which let you validate VAT numbers with government services, look up VAT rates by ISO country code, calculate price quotes with centralized VAT rules and store transactions with each sale for VAT reporting.",
     "contact": {
       "email": "team@vatstack.com"
     },
     "version": "1.3.0"
   },
+  "externalDocs": {
+    "description": "Vatstack API Reference",
+    "url": "https://vatstack.com/docs"
+  },
   "components": {
     "schemas": {
       "batch": {
+        "type": "object",
         "description": "Batch mass VAT number validations for due dates. Add VAT numbers in bulk or append VAT numbers incrementally to your existing batch process, then start it whenever required.",
         "properties": {
           "created": {
@@ -84,7 +89,119 @@
           }
         }
       },
+      "evidence": {
+        "type": "object",
+        "description": "Store pieces of evidence that confirm your customer’s location. Evidence object can be attached to a supply object and it can only be attached to one supply object at a time.",
+        "properties": {
+          "bank_address": {
+            "type": "object",
+            "properties": {
+              "country_code": {
+                "type": "string",
+                "description": "2-letter ISO country code of the bank or payment source.",
+                "maxLength": 2,
+                "minLength": 2
+              },
+              "name": {
+                "type": "string",
+                "description": "Name of the bank or payment source."
+              }
+            }
+          },
+          "billing_address": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string",
+                "description": "City of the customer’s billing address."
+              },
+              "country_code": {
+                "type": "string",
+                "description": "2-letter ISO country code of the customer’s billing address.",
+                "maxLength": 2,
+                "minLength": 2
+              },
+              "line_1": {
+                "type": "string",
+                "description": "Line 1 of the customer’s billing address."
+              },
+              "line_2": {
+                "type": "string",
+                "description": "Line 2 of the customer’s billing address."
+              },
+              "postal_code": {
+                "type": "string",
+                "description": "Postal code of the customer’s billing address."
+              },
+              "state": {
+                "type": "string",
+                "description": "State of the customer’s billing address."
+              }
+            }
+          },
+          "created": {
+            "type": "string",
+            "description": "ISO date at which the object was created.",
+            "format": "date-time"
+          },
+          "ip_address": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "The same IP address coming from the `ip_address.label` body parameter which will be geolocated automatically."
+              },
+              "provider": {
+                "type": "string",
+                "description": "Provider used to geolocate `ip_address.label`. We use MaxMind® GeoIP2 geolocation technology by default but have a number of fallback providers."
+              },
+              "city": {
+                "type": "string",
+                "description": "City of the geolocated IP address."
+              },
+              "country_code": {
+                "type": "string",
+                "description": "2-letter ISO country code of the geolocated IP address.",
+                "maxLength": 2,
+                "minLength": 2
+              },
+              "state": {
+                "type": "string",
+                "description": "State of the geolocated IP address."
+              }
+            }
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the object.",
+            "format": "uuid"
+          },
+          "required_count": {
+            "type": "integer",
+            "description": "Required pieces of evidence according to your account’s regional settings.",
+            "format": "int32"
+          },
+          "updated": {
+            "type": "string",
+            "description": "ISO date at which the object was updated.",
+            "format": "date-time"
+          }
+        }
+      },
+      "hits": {
+
+      },
+      "quote": {
+
+      },
+      "rate": {
+
+      },
+      "supply": {
+
+      },
       "validation": {
+        "type": "object",
         "description": "Validate your business customer’s VAT number against official government servers in real-time. The API asynchronously validates VAT numbers for you if government services experience downtime.",
         "properties": {
           "active": {
@@ -118,7 +235,9 @@
           },
           "country_code": {
             "type": "string",
-            "description": "2-letter ISO country code. Note that while Greek VAT numbers contain the `EL` country code, our response will return the ISO country code `GR`."
+            "description": "2-letter ISO country code. Note that while Greek VAT numbers contain the `EL` country code, our response will return the ISO country code `GR`.",
+            "maxLength": 2,
+            "minLength": 2
           },
           "created": {
             "type": "string",
@@ -187,9 +306,6 @@
         "in": "header"
       }
     }
-  },
-  "externalDocs": {
-    "url": "https://vatstack.com/docs"
   },
   "paths": {
     "/batches": {
@@ -334,7 +450,7 @@
     "/batches/{id}": {
       "get": {
         "operationId": "getBatchById",
-        "summary": "Retrieves a batch object.",
+        "summary": "Retrieves a batch object by the {id} path parameter.",
         "parameters": [
           {
             "name": "id",
@@ -471,6 +587,323 @@
         "responses": {
           "204": {
             "description": "Batch object successfully deleted."
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/evidences": {
+      "post": {
+        "operationId": "createEvidence",
+        "summary": "Creates an evidence object.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bank_address": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the bank or payment source used by the customer. This information is usually provided by your payments provider."
+                      },
+                      "country_code": {
+                        "type": "string",
+                        "description": "2-letter ISO country code of the bank or payment source. This information is usually provided by your payments provider."
+                      }
+                    }
+                  },
+                  "billing_address": {
+                    "type": "object",
+                    "properties": {
+                      "city": {
+                        "type": "string",
+                        "description": "City of the customer’s billing address."
+                      },
+                      "country_code": {
+                        "type": "string",
+                        "description": "2-letter ISO country code of the customer’s billing address."
+                      },
+                      "line_1": {
+                        "type": "string",
+                        "description": "Line 1 of the customer’s billing address."
+                      },
+                      "line_2": {
+                        "type": "string",
+                        "description": "Line 2 of the customer’s billing address."
+                      },
+                      "postal_code": {
+                        "type": "string",
+                        "description": "Postal code of the customer’s billing address."
+                      },
+                      "state": {
+                        "type": "string",
+                        "description": "State of the customer’s billing address."
+                      }
+                    }
+                  },
+                  "ip_address": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "description": "IP address of the customer at the time of supply. We will automatically geolocate this IP address and hydrate the other fields."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Evidence object successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/evidence"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getAllEvidences",
+        "summary": "Retrieves all evidence objects in order of creation, with the latest appearing highest.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Integer for the current page.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evidence objects successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "has_more": {
+                      "description": "True if this list has another page of items after this one that can be fetched.",
+                      "type": "boolean"
+                    },
+                    "evidences_count": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "evidences": {
+                      "items": {
+                        "$ref": "#/components/schemas/evidence"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "has_more",
+                    "evidences_count",
+                    "evidences"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/evidences/{id}": {
+      "get": {
+        "operationId": "getEvidenceById",
+        "summary": "Retrieves an evidence object by the {id} path parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evidence object successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/evidence"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "updateEvidence",
+        "summary": "Updates an evidence object by the {id} path parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bank_address": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Name of the bank or payment source used by the customer. This information is usually provided by your payments provider."
+                      },
+                      "country_code": {
+                        "type": "string",
+                        "description": "2-letter ISO country code of the bank or payment source. This information is usually provided by your payments provider."
+                      }
+                    }
+                  },
+                  "billing_address": {
+                    "type": "object",
+                    "properties": {
+                      "city": {
+                        "type": "string",
+                        "description": "City of the customer’s billing address."
+                      },
+                      "country_code": {
+                        "type": "string",
+                        "description": "2-letter ISO country code of the customer’s billing address."
+                      },
+                      "line_1": {
+                        "type": "string",
+                        "description": "Line 1 of the customer’s billing address."
+                      },
+                      "line_2": {
+                        "type": "string",
+                        "description": "Line 2 of the customer’s billing address."
+                      },
+                      "postal_code": {
+                        "type": "string",
+                        "description": "Postal code of the customer’s billing address."
+                      },
+                      "state": {
+                        "type": "string",
+                        "description": "State of the customer’s billing address."
+                      }
+                    }
+                  },
+                  "ip_address": {
+                    "type": "object",
+                    "properties": {
+                      "label": {
+                        "type": "string",
+                        "description": "IP address of the customer at the time of supply. We will automatically geolocate this IP address and hydrate the other fields."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Evidence object successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/evidence"
+                }
+              }
+            }
           },
           "default": {
             "description": "Error response.",
