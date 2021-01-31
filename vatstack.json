@@ -188,8 +188,41 @@
           }
         }
       },
-      "hits": {
-
+      "hit": {
+        "type": "object",
+        "description": "Retrieve the number of hits you have used for the running month and the total capacity allocated to your current subscription plan.",
+        "properties": {
+          "supplies": {
+            "type": "object",
+            "properties": {
+              "capacity": {
+                "type": "integer",
+                "description": "Included supplies in the plan you’re subscribed to.",
+                "format": "int32"
+              },
+              "used": {
+                "type": "integer",
+                "description": "Supplies created during the running month. Additional requests beyond `capacity` will be charged according to the plan you’re subscribed to.",
+                "format": "int32"
+              }
+            }
+          },
+          "validations": {
+            "type": "object",
+            "properties": {
+              "capacity": {
+                "type": "integer",
+                "description": "Included validations in the plan you’re subscribed to.",
+                "format": "int32"
+              },
+              "used": {
+                "type": "integer",
+                "description": "Validations created during the running month. Additional requests beyond `capacity` will be charged according to the plan you’re subscribed to.",
+                "format": "int32"
+              }
+            }
+          }
+        }
       },
       "quote": {
 
@@ -923,6 +956,40 @@
         ]
       }
     },
+    "hits": {
+      "get": {
+        "operationId": "getAllHits",
+        "summary": "This endpoint can be useful if you want to perform a quick check against your hits count before initiating a VAT number validation request.",
+        "responses": {
+          "200": {
+            "description": "Hits successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/hit"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "publicKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
     "/validations": {
       "post": {
         "operationId": "createValidation",
@@ -992,7 +1059,8 @@
         },
         "security": [
           {
-            "publicKey": []
+            "publicKey": [],
+            "secretKey": []
           }
         ]
       },
@@ -1115,7 +1183,8 @@
         },
         "security": [
           {
-            "publicKey": []
+            "publicKey": [],
+            "secretKey": []
           }
         ]
       }
@@ -1159,7 +1228,8 @@
         },
         "security": [
           {
-            "publicKey": []
+            "publicKey": [],
+            "secretKey": []
           }
         ]
       }
