@@ -295,7 +295,8 @@
               },
               "inclusive": {
                 "type": "string",
-                "description": "Specifies if the `amount_total` is inclusive (common for EU consumers) or exclusive of VAT. This affects how the `vat.amount` is calculated. If `false`, you should present `amount` plus `vat.amount` to your customer as the final price to pay."
+                "description": "Specifies if the `amount_total` is inclusive (common for EU consumers) or exclusive of VAT. This affects how the `vat.amount` is calculated. If `false`, you should present `amount` plus `vat.amount` to your customer as the final price to pay.",
+                "default": false
               },
               "local_name": {
                 "type": "string",
@@ -315,7 +316,88 @@
         }
       },
       "rate": {
-
+        "type": "object",
+        "description": "Keep the rates of your application up-to-date with a regular VAT rate lookup. This ensures that your invoice states the correct VAT across EU Member States. We have also started to add countries outside the EU and will keep them updated.",
+        "properties": {
+          "abbreviation": {
+            "type": "string",
+            "description": "Abbreviation of `local_name`."
+          },
+          "categories": {
+            "type": "object",
+            "properties": {
+              "audiobook": {
+                "type": "number",
+                "format": "double"
+              },
+              "broadcasting": {
+                "type": "number",
+                "format": "double"
+              },
+              "ebook": {
+                "type": "number",
+                "format": "double"
+              },
+              "eperiodical": {
+                "type": "number",
+                "format": "double"
+              },
+              "eservice": {
+                "type": "number",
+                "format": "double"
+              },
+              "telecommunication": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
+          "country_code": {
+            "type": "string",
+            "description": "2-letter ISO country code.",
+            "maxLength": 2,
+            "minLength": 2
+          },
+          "country_name": {
+            "type": "string",
+            "description": "Corresponding English name of `country_code`."
+          },
+          "currency": {
+            "type": "string",
+            "description": "3-letter ISO 4217 local currency code.",
+            "maxLength": 3,
+            "minLength": 3
+          },
+          "local_name": {
+            "type": "string",
+            "description": "Localized name of the VAT identification number."
+          },
+          "member_state": {
+            "type": "boolean",
+            "description": "Boolean indicating whether the country is an EU Member State."
+          },
+          "reduced_rates": {
+            "type": "array",
+            "description": "3-letter ISO 4217 local currency code.",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "standard_rate": {
+            "type": "number",
+            "description": "Standard VAT rate in percent.",
+            "format": "double"
+          },
+          "vat_abbreviation": {
+            "type": "string",
+            "description": "Abbreviation of `vat_local_name`."
+          },
+          "vat_local_name": {
+            "type": "string",
+            "description": "Localized name of the VAT."
+          }
+        }
       },
       "supply": {
 
@@ -1268,6 +1350,141 @@
         },
         "security": [
           {
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/rates": {
+      "get": {
+        "operationId": "getAllRates",
+        "summary": "Retrieves all VAT rate objects, including standard VAT rates and VAT rates for digital products.",
+        "parameters": [
+          {
+            "name": "country_code",
+            "in": "query",
+            "description": "Filter results by a 2-letter ISO country code.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "member_state",
+            "in": "query",
+            "description": "Boolean to filter results by EU Member State.",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Integer for the current page.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rate objects successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "has_more": {
+                      "description": "True if this list has another page of items after this one that can be fetched.",
+                      "type": "boolean"
+                    },
+                    "rates_count": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "rates": {
+                      "items": {
+                        "$ref": "#/components/schemas/rate"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "has_more",
+                    "rates_count",
+                    "rates"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "publicKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/rates/geolocate": {
+      "get": {
+        "operationId": "getRateByIPAddress",
+        "summary": "Retrieves a geolocated VAT rate by IP address.",
+        "parameters": [
+          {
+            "name": "ip_address",
+            "in": "query",
+            "description": "IPv4 or IPv6 address to geolocate. If none is provided, the IP address of the request is used.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rate object successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rate"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "publicKey": [],
             "secretKey": []
           }
         ]
