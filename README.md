@@ -1,3 +1,3 @@
 # Vatstack OpenAPI Specification
 
-This repository contains OpenAPI 3.0 specifications for Vatstack’s API.
+This repository contains the OpenAPI 3.0 Specification (OAS) for Vatstack’s API.
