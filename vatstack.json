@@ -25,8 +25,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Descriptive name of the object.",
-            "required": true
+            "description": "Descriptive name of the object."
           },
           "queries": {
             "type": "array",
@@ -64,7 +63,10 @@
               "$ref": "#/components/schemas/validation"
             }
           }
-        }
+        },
+        "required": [
+          "name"
+        ]
       },
       "error": {
         "type": "object",
@@ -130,8 +132,7 @@
           },
           "query": {
             "type": "string",
-            "description": "Your original query.",
-            "required": true
+            "description": "Your original query."
           },
           "requested": {
             "type": "string",
@@ -168,7 +169,10 @@
             "type": "string",
             "description": "VAT number extracted from your query without the country code."
           }
-        }
+        },
+        "required": [
+          "query"
+        ]
       }
     },
     "securitySchemes": {
@@ -373,6 +377,17 @@
       "put": {
         "operationId": "updateBatch",
         "summary": "Updates a batch object by the {id} path parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
