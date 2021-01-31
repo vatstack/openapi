@@ -225,7 +225,94 @@
         }
       },
       "quote": {
-
+        "type": "object",
+        "description": "The quote object combines the best of the [rate object](https://vatstack.com/docs/rates) and [validation object](https://vatstack.com/docs/validations) and takes them a step further. It uses your existing business information to perform the entire VAT-compliant business logic for you. All VAT rules have been centralized so that every response is directly actionable.",
+        "properties": {
+          "amount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amount_total": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the digital product. Defaults to `null` if no category was specified in the request or if the category cannot be applied for the `country_code`."
+          },
+          "country_code": {
+            "type": "string",
+            "description": "2-letter ISO country code.",
+            "maxLength": 2,
+            "minLength": 2
+          },
+          "country_name": {
+            "type": "string",
+            "description": "Corresponding English name of `country_code`."
+          },
+          "created": {
+            "type": "string",
+            "description": "ISO date at which the object was created.",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the object.",
+            "format": "uuid"
+          },
+          "ip_address": {
+            "type": "string",
+            "description": "The same IP address coming from the `ip_address` body parameter, or the geolocated IP address if none was provided. Value is `null` if `country_code` was provided."
+          },
+          "local_name": {
+            "type": "string",
+            "description": "Localized name of the VAT identification number."
+          },
+          "member_state": {
+            "type": "boolean",
+            "description": "Boolean indicating whether `country_code` is an EU member state."
+          },
+          "updated": {
+            "type": "string",
+            "description": "ISO date at which the object was updated.",
+            "format": "date-time"
+          },
+          "validation": {
+            "type": "object",
+            "$ref": "#/components/schemas/validation"
+          },
+          "vat": {
+            "type": "object",
+            "properties": {
+              "abbreviation": {
+                "type": "string",
+                "description": "Abbreviation of `vat.local_name`."
+              },
+              "amount": {
+                "type": "integer",
+                "description": "VAT amount in cents.",
+                "format": "int32"
+              },
+              "inclusive": {
+                "type": "string",
+                "description": "Specifies if the `amount_total` is inclusive (common for EU consumers) or exclusive of VAT. This affects how the `vat.amount` is calculated. If `false`, you should present `amount` plus `vat.amount` to your customer as the final price to pay."
+              },
+              "local_name": {
+                "type": "string",
+                "description": "Localized name of the VAT."
+              },
+              "rate": {
+                "type": "number",
+                "description": "VAT rate applied for the calculation. If member_state is `false`, the value will be `0`.",
+                "format": "double"
+              },
+              "rate_type": {
+                "type": "string",
+                "description": "Automatically determined type of VAT rate based on inputs. Can be `null`, `exempt`, `reduced`, `reverse_charge`, `standard` or `zero`."
+              }
+            }
+          }
+        }
       },
       "rate": {
 
@@ -985,6 +1072,202 @@
         "security": [
           {
             "publicKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/quotes": {
+      "post": {
+        "operationId": "createQuote",
+        "summary": "Creates a quote object.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "description": "Amount in **cents** (e.g. 100.50 must be expressed as 10050). This common common workaround prevents unexpected rounding issues."
+                  },
+                  "country_code": {
+                    "type": "string",
+                    "description": "2-letter ISO country code. If provided, the `ip_address` parameter will be ignored."
+                  },
+                  "category": {
+                    "type": "string",
+                    "description": "Digital products category used for calculation. Supports `audiobook`, `broadcasting`, `ebook`, `eperiodical`, `eservice` and `telecommunication`."
+                  },
+                  "ip_address": {
+                    "type": "string",
+                    "description": "IP address to geolocate the VAT rate for. If neither IP address nor `country_code` is provided, it will be automatically determined from the request."
+                  },
+                  "validation": {
+                    "type": "string",
+                    "description": "Unique identifier of a [validation object](https://vatstack.com/docs/validations). This is useful if you let your customer enter a VAT number beforehand. Its valid value can affect `vat.amount`, `vat.rate` and `amount_total` when zero-rating.",
+                    "format": "uuid"
+                  },
+                  "vat": {
+                    "type": "object",
+                    "properties": {
+                      "inclusive": {
+                        "type": "boolean",
+                        "description": "Boolean for whether the resulting VAT amount should be calculated inclusive or exclusive of VAT. Defaults to `false`. All other `vat` fields will be hydrated for you."
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "amount"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Quote object successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/quote"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "publicKey": [],
+            "secretKey": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getAllQuotes",
+        "summary": "Retrieves all quote objects in order of creation, with the most recent appearing highest.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Integer for the current page.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote objects successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "has_more": {
+                      "description": "True if this list has another page of items after this one that can be fetched.",
+                      "type": "boolean"
+                    },
+                    "quotes_count": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "quotes": {
+                      "items": {
+                        "$ref": "#/components/schemas/quote"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "has_more",
+                    "quotes_count",
+                    "quotes"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "publicKey": [],
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/quotes/{id}": {
+      "get": {
+        "operationId": "getQuoteById",
+        "summary": "Retrieves a quote object.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quote object successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/quote"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
             "secretKey": []
           }
         ]
