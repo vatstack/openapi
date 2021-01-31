@@ -10,6 +10,62 @@
   },
   "components": {
     "schemas": {
+      "batch": {
+        "description": "Batch mass VAT number validations for due dates. Add VAT numbers in bulk or append VAT numbers incrementally to your existing batch process, then start it whenever required.",
+        "properties": {
+          "created": {
+            "type": "string",
+            "description": "ISO date at which the object was created.",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the object.",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Descriptive name of the object.",
+            "required": true
+          },
+          "queries": {
+            "type": "array",
+            "description": "Array of all queries in the order of your input.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "queries_ignored": {
+            "type": "array",
+            "description": "Array of all queries which are of invalid format. Ignored queries are automatically identified upon your input. Its items will not be validated.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "scheduled": {
+            "type": "string",
+            "description": "ISO date at which the object status was changed to `scheduled`. Defaults to `null` while the status is `pending`.",
+            "format": "date-time"
+          },
+          "succeeded_count": {
+            "type": "integer",
+            "description": "The number of `validations` where `valid` is `true` or `false`. It’s an indicator for how far the batch has progressed.",
+            "format": "int32"
+          },
+          "updated": {
+            "type": "string",
+            "description": "ISO date at which the object was updated.",
+            "format": "date-time"
+          },
+          "validations": {
+            "type": "array",
+            "description": "Array of the first 20 validation objects in the order of `queries`. If an `id` is shown in the object, it was created for the batch and you can retrieve it individually. See [validation object](https://vatstack.com/docs/validations) for reference.",
+            "items": {
+              "$ref": "#/components/schemas/validation"
+            }
+          }
+        }
+      },
       "error": {
         "type": "object",
         "description": "Error response from the Vatstack API.",
@@ -74,7 +130,8 @@
           },
           "query": {
             "type": "string",
-            "description": "Your original query."
+            "description": "Your original query.",
+            "required": true
           },
           "requested": {
             "type": "string",
@@ -131,6 +188,293 @@
     "url": "https://vatstack.com/docs"
   },
   "paths": {
+    "/batches": {
+      "post": {
+        "operationId": "createBatch",
+        "summary": "Creates a batch object.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Descriptive name of the batch object. Give it any name you like to serve for your reference."
+                  },
+                  "queries": {
+                    "type": "array",
+                    "description": "Array of VAT numbers to be queried. Should be an array of strings.",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Batch object successfully created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/batch"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "getAllBatches",
+        "summary": "Retrieves all batch objects in order of creation, with the latest appearing highest.",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Integer for the current page.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Show only objects with the given `status`.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch objects successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "has_more": {
+                      "description": "True if this list has another page of items after this one that can be fetched.",
+                      "type": "boolean"
+                    },
+                    "batches_count": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "batches": {
+                      "items": {
+                        "$ref": "#/components/schemas/batch"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "has_more",
+                    "batches_count",
+                    "batches"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      }
+    },
+    "/batches/{id}": {
+      "get": {
+        "operationId": "getBatchById",
+        "summary": "Retrieves a batch object.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch object successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/batch"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "updateBatch",
+        "summary": "Updates a batch object by the {id} path parameter.",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "description": "Either `append` to append an array of queries to the existing array of queries, or `replace` to empty the existing array of queries prior to adding. Defaults to `append`.",
+                    "enum": [
+                      "append",
+                      "replace"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "description": "Descriptive name of the batch object. Give it any name you like to serve for your reference."
+                  },
+                  "queries": {
+                    "type": "array",
+                    "description": "Array of VAT numbers to be added while considering the `mode`.",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "Set it to `scheduled` once you want to schedule the validation process with the queries provided. It’s possible to add queries and change the status in one go.",
+                    "enum": [
+                      "scheduled"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Batch object successfully updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/batch"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteBatchById",
+        "summary": "Deletes a batch object by the {id} path parameter.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Batch object successfully deleted."
+          },
+          "default": {
+            "description": "Error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "secretKey": []
+          }
+        ]
+      }
+    },
     "/validations": {
       "post": {
         "operationId": "createValidation",
@@ -338,7 +682,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
