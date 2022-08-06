@@ -574,10 +574,11 @@
             "enum": [
               "au_gst",
               "ch_vat",
-              "eu_moss",
+              "eu_oss_vat",
               "eu_vat",
               "gb_vat",
-              "no_vat"
+              "no_vat",
+              "sg_gst"
             ]
           },
           "updated": {
@@ -2023,10 +2024,11 @@
                     "enum": [
                       "au_gst",
                       "ch_vat",
-                      "eu_moss",
+                      "eu_oss_vat",
                       "eu_vat",
                       "gb_vat",
-                      "no_vat"
+                      "no_vat",
+                      "sg_gst"
                     ]
                   },
                   "query": {
@@ -2147,10 +2149,11 @@
               "enum": [
                 "au_gst",
                 "ch_vat",
-                "eu_moss",
+                "eu_oss_vat",
                 "eu_vat",
                 "gb_vat",
-                "no_vat"
+                "no_vat",
+                "sg_gst"
               ]
             }
           }
@@ -2249,6 +2252,41 @@
           }
         ]
       }
+    },
+    "delete": {
+      "operationId": "deleteValidationById",
+      "summary": "Deletes a validation object by the {id} path parameter.",
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "responses": {
+        "204": {
+          "description": "Validation object successfully deleted."
+        },
+        "default": {
+          "description": "Error response.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/error"
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "secretKey": []
+        }
+      ]
     }
   },
   "servers": [
